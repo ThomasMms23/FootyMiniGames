@@ -9,7 +9,7 @@ export default function Navbar() {
                     Accueil
                 </Link>
                 <Link className="link" to="/Flagrank">
-                    Flag
+                    Guess The Rank
                 </Link>
             </div>
         </nav>
