@@ -8,6 +8,9 @@ const elements = [
     { name: "Brésil", rank: 3 },
     { name: "Angleterre", rank: 4 },
     { name: "Belgique", rank: 5 },
+    { name: "Croatie", rank: 6 },
+    { name: "Portugal", rank: 7 },
+    { name: "Maroc", rank: 8 },
     // Add other elements here
 ];
 
@@ -19,15 +22,19 @@ const Game = () => {
     const [isGameOver, setIsGameOver] = useState(false);
     const [isGameWon, setIsGameWon] = useState(false);
     const [remainingTurns, setRemainingTurns] = useState(5);
-    const [isTurnsFinished, setIsTurnsFinished] = useState(false);
 
     useEffect(() => {
-        setRemainingElements([...elements]);
+        // Shuffle the elements
+        const shuffledElements = shuffleArray(elements);
+
+        // Select the first 5 elements
+        const selectedElements = shuffledElements.slice(0, 5);
+
+        setRemainingElements([...selectedElements]);
     }, []);
 
     const pickRandomElement = () => {
         if (remainingElements.length === 0 || remainingTurns === 0) {
-            setIsTurnsFinished(true);
             setIsGameOver(true);
             checkGameResult();
             return;
@@ -74,18 +81,29 @@ const Game = () => {
         return true;
     };
 
-    const isGameFinished = userRanking.length === elements.length;
+    const isGameFinished = userRanking.length === 5;
 
     const checkGameResult = () => {
-        const isCorrectlyRanked = userRanking.every(
+        if (userRanking.length !== 5) {
+            setIsGameWon(false);
+            return;
+        }
+
+        const sortedUserRanking = userRanking.slice().sort((a, b) => {
+            const aRank = elements.find(
+                (element) => element.name === a.name
+            ).rank;
+            const bRank = elements.find(
+                (element) => element.name === b.name
+            ).rank;
+            return aRank - bRank;
+        });
+
+        const isCorrectlyRanked = sortedUserRanking.every(
             (element, index) => element.rank === index + 1
         );
 
-        if (isCorrectlyRanked) {
-            setIsGameWon(true);
-        } else if (remainingTurns === 0) {
-            setIsGameOver(true);
-        }
+        setIsGameWon(isCorrectlyRanked && remainingTurns > 0);
     };
 
     const handleGameStart = () => {
@@ -97,18 +115,17 @@ const Game = () => {
     };
 
     const handleRestart = () => {
-        setRemainingElements([...elements]);
+        // Shuffle the elements again for a new game
+        const shuffledElements = shuffleArray(elements);
+        const selectedElements = shuffledElements.slice(0, 5);
+
+        setRemainingElements([...selectedElements]);
         setUserRanking([]);
         setIsGameStarted(false);
         setIsGameOver(false);
         setIsGameWon(false);
         setRemainingTurns(5);
-        setIsTurnsFinished(false);
     };
-
-    const sortedUserRanking = userRanking.sort(
-        (a, b) => a.userRank - b.userRank
-    );
 
     return (
         <div>
@@ -118,7 +135,7 @@ const Game = () => {
                     <div>
                         <h3>Votre classement actuel :</h3>
                         <ul>
-                            {sortedUserRanking.map((element, index) => (
+                            {userRanking.map((element, index) => (
                                 <li key={element.name}>
                                     {index + 1}. {element.name} - Classement :{" "}
                                     {element.userRank}
@@ -127,7 +144,7 @@ const Game = () => {
                         </ul>
                     </div>
                     {isGameStarted ? (
-                        currentElement && !isTurnsFinished ? (
+                        currentElement ? (
                             <div>
                                 <Element
                                     name={currentElement.name}
@@ -138,7 +155,7 @@ const Game = () => {
                                 </p>
                             </div>
                         ) : (
-                            <p>Le jeu est terminé !</p>
+                            <p>Chargement de lélément suivant...</p>
                         )
                     ) : (
                         <button onClick={handleGameStart}>Commencer</button>
@@ -151,7 +168,7 @@ const Game = () => {
                             <h2>Bravo ! Vous avez terminé le jeu.</h2>
                             <h3>Votre classement final :</h3>
                             <ul>
-                                {sortedUserRanking.map((element, index) => (
+                                {userRanking.map((element, index) => (
                                     <li key={element.name}>
                                         {index + 1}. {element.name} - Classement
                                         : {element.userRank}
@@ -175,6 +192,19 @@ const Game = () => {
         </div>
     );
 };
+
+// Helper function to shuffle an array using the Fisher-Yates algorithm
+function shuffleArray(array) {
+    const shuffledArray = array.slice(); // Create a copy of the original array
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledArray[i], shuffledArray[j]] = [
+            shuffledArray[j],
+            shuffledArray[i],
+        ];
+    }
+    return shuffledArray;
+}
 
 Element.propTypes = {
     name: PropTypes.string.isRequired,
